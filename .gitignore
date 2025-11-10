@@ -1,0 +1,28 @@
+# Logs en auditbestanden
+logs/
+*.log
+*.csv
+
+# Python-artefacten
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtuele omgevingen
+.env
+venv/
+ENV/
+env/
+.venv/
+
+# VS Code instellingen
+.vscode/
+
+# OS-specifieke bestanden
+Thumbs.db
+.DS_Store
+
+# Backups en tijdelijke bestanden
+*.bak
+*.tmp

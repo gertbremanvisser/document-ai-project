@@ -1,10 +1,22 @@
 import os
-from select_folder import get_main_folder
 from pdf2image import convert_from_path
 import pytesseract
 from PyPDF2 import PdfWriter
 import csv
 from datetime import datetime
+
+def get_folder():
+    folder = os.environ.get("MAIN_FOLDER")
+    if folder and os.path.isdir(folder):
+        return folder
+    if os.path.exists("config.env"):
+        with open("config.env", "r", encoding="utf-8") as f:
+            line = f.readline().strip()
+            if line.startswith("MAIN_FOLDER="):
+                folder = line.split("=", 1)[1]
+                if os.path.isdir(folder):
+                    return folder
+    raise RuntimeError("Geen hoofdmap ingesteld. Draai eerst select_folder.py.")
 
 def ocr_pdf(input_path, output_path):
     images = convert_from_path(input_path)
@@ -39,5 +51,5 @@ def ocr_pdfs(folder):
                     log_action(logfile, file, txt_file, "OCR_EXECUTED", f"ERROR: {e}")
 
 if __name__ == "__main__":
-    folder = get_main_folder()
+    folder = get_folder()
     ocr_pdfs(folder)

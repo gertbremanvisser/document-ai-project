@@ -1,21 +1,31 @@
 import os
 import fitz  # PyMuPDF
-from select_folder import get_main_folder
+
+def get_folder():
+    # Eerst proberen uit environment
+    folder = os.environ.get("MAIN_FOLDER")
+    if folder and os.path.isdir(folder):
+        return folder
+    # Anders uit config.env
+    if os.path.exists("config.env"):
+        with open("config.env", "r", encoding="utf-8") as f:
+            line = f.readline().strip()
+            if line.startswith("MAIN_FOLDER="):
+                folder = line.split("=", 1)[1]
+                if os.path.isdir(folder):
+                    return folder
+    raise RuntimeError("Geen hoofdmap ingesteld. Draai eerst select_folder.py.")
 
 def analyse_pdfs(folder):
     for file in os.listdir(folder):
-        if file.endswith(".pdf"):
+        if file.endswith(".pdf") and not ("(TXT)" in file or "(OCR)" in file):
             path = os.path.join(folder, file)
             doc = fitz.open(path)
-            text = ""
-            for page in doc:
-                text += page.get_text()
+            text = "".join(page.get_text() for page in doc)
 
             if text.strip():
-                # tekst aanwezig → (TXT)
                 new_name = file.replace(".pdf", "(TXT).pdf")
             else:
-                # geen tekst → (OCR)
                 new_name = file.replace(".pdf", "(OCR).pdf")
 
             new_path = os.path.join(folder, new_name)
@@ -24,5 +34,5 @@ def analyse_pdfs(folder):
                 print(f"{file} → {new_name}")
 
 if __name__ == "__main__":
-    folder = get_main_folder()
+    folder = get_folder()
     analyse_pdfs(folder)

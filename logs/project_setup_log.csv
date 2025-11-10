@@ -1,0 +1,10 @@
+timestamp,type,path,status,user,machine
+2025-11-09 15:48:46,folder,C:\Users\gertv\Documents\document_ai_project\data\input,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,folder,C:\Users\gertv\Documents\document_ai_project\data\output,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,folder,C:\Users\gertv\Documents\document_ai_project\logs,exists,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,folder,C:\Users\gertv\Documents\document_ai_project\utils,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,file,C:\Users\gertv\Documents\document_ai_project\main.py,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,file,C:\Users\gertv\Documents\document_ai_project\pdf_scanner.py,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,file,C:\Users\gertv\Documents\document_ai_project\ocr_module.py,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,file,C:\Users\gertv\Documents\document_ai_project\utils\file_helpers.py,created,gertv,HP-ENVY-GERT
+2025-11-09 15:48:46,file,C:\Users\gertv\Documents\document_ai_project\requirements.txt,created,gertv,HP-ENVY-GERT

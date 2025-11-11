@@ -1,5 +1,6 @@
 import os
 import io
+import time
 from datetime import datetime
 
 import pytesseract
@@ -9,17 +10,11 @@ from PyPDF2 import PdfWriter, PdfReader
 from utils.config_utils import read_config
 
 def _debug_dir(base_folder, base_name):
-    """
-    Create a debug folder for a given PDF (when DEBUG_OCR=1).
-    """
     dbg = os.path.join(base_folder, f"{base_name}_ocr_debug")
     os.makedirs(dbg, exist_ok=True)
     return dbg
 
 def _write_final_pdf(writer, out_path):
-    """
-    Safely write the combined OCR PDF via a temp file.
-    """
     tmp_path = out_path + ".tmp"
     with open(tmp_path, "wb") as f_out:
         writer.write(f_out)
@@ -27,21 +22,42 @@ def _write_final_pdf(writer, out_path):
         os.remove(out_path)
     os.replace(tmp_path, out_path)
 
-def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
+def choose_dpi():
+    print("\n=== Kies DPI voor OCR ===")
+    print("1) 150 (snel, lagere kwaliteit)")
+    print("2) 200 (balans snelheid/kwaliteit)")
+    print("3) 300 (hogere kwaliteit, trager)")
+    print("4) 400 (zeer hoge kwaliteit, traag)")
+    print("5) Anders (voer zelf een getal in)")
+    choice = input("Maak een keuze (1-5): ").strip()
+
+    mapping = {"1": 150, "2": 200, "3": 300, "4": 400}
+    if choice in mapping:
+        return mapping[choice]
+    elif choice == "5":
+        try:
+            dpi_val = int(input("Voer een DPI getal in (72-600): ").strip())
+            if dpi_val < 72 or dpi_val > 600:
+                print("Ongeldige waarde, gebruik standaard 200 DPI.")
+                return 200
+            return dpi_val
+        except Exception:
+            print("Kon invoer niet verwerken, gebruik standaard 200 DPI.")
+            return 200
+    else:
+        print("Ongeldige keuze, gebruik standaard 200 DPI.")
+        return 200
+
+def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=200):
     """
-    Per-page OCR workflow:
-    - Render each page to PNG (pdf2image).
-    - OCR each page with Tesseract to a searchable single-page PDF.
-    - Merge all pages into a single (TXT).pdf.
-    - Optional: save per-page PNG and HOCR for deep debugging.
+    OCR per pagina:
+    - Render elke pagina naar PNG (pdf2image).
+    - OCR per pagina met Tesseract.
+    - Voeg alle pagina's samen tot één (TXT).pdf.
+    - Optioneel: debug PNG/HOCR per pagina.
     """
     print("OCR gestart...")
     pytesseract.pytesseract.tesseract_cmd = tesseract_path
-
-    if not os.path.isdir(folder):
-        print(f"FOUT: folder bestaat niet of is niet toegankelijk: {folder}")
-        print("OCR afgerond.")
-        return
 
     candidates = [f for f in os.listdir(folder) if f.lower().endswith("(ocr).pdf")]
     if not candidates:
@@ -50,7 +66,7 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
         return
 
     for file in candidates:
-        base_name = file[:-8]  # strip "(OCR).pdf" (case-insensitive handled by search)
+        base_name = file[:-8]  # strip "(OCR).pdf"
         ocr_path = os.path.join(folder, file)
         txt_path = os.path.join(folder, base_name + "(TXT).pdf")
 
@@ -66,7 +82,6 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
             print(f"Debug output: {dbg_dir}")
 
         try:
-            # Count pages using PdfReader
             src_reader = PdfReader(ocr_path)
             page_count = len(src_reader.pages)
             print(f"{page_count} pagina's gevonden")
@@ -74,7 +89,10 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
             writer = PdfWriter()
             non_empty_pages = 0
 
+            start_total = time.time()
+
             for i in range(1, page_count + 1):
+                start_page = time.time()
                 print(f"Render pagina {i}/{page_count} (DPI={dpi})")
                 images = convert_from_path(
                     ocr_path,
@@ -87,11 +105,8 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
 
                 if dbg_dir:
                     img_path = os.path.join(dbg_dir, f"page_{i:03d}.png")
-                    try:
-                        img.save(img_path, "PNG")
-                        print(f"Saved debug image: {img_path}")
-                    except Exception as e_img:
-                        print(f"WAARSCHUWING: kon debug image niet opslaan voor pagina {i}: {e_img}")
+                    img.save(img_path, "PNG")
+                    print(f"Saved debug image: {img_path}")
 
                 print(f"OCR pagina {i}")
                 try:
@@ -106,29 +121,27 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
                     print(f"Preview pagina {i}: {repr(preview)}")
 
                     if dbg_dir:
-                        try:
-                            hocr = pytesseract.image_to_pdf_or_hocr(img, extension='hocr')
-                            hocr_path = os.path.join(dbg_dir, f"page_{i:03d}.hocr")
-                            with open(hocr_path, "wb") as fh:
-                                fh.write(hocr)
-                            print(f"Saved debug HOCR: {hocr_path}")
-                        except Exception as e_h:
-                            print(f"WAARSCHUWING: kon HOCR niet genereren voor pagina {i}: {e_h}")
+                        hocr = pytesseract.image_to_pdf_or_hocr(img, extension='hocr')
+                        hocr_path = os.path.join(dbg_dir, f"page_{i:03d}.hocr")
+                        with open(hocr_path, "wb") as fh:
+                            fh.write(hocr)
+                        print(f"Saved debug HOCR: {hocr_path}")
 
                 except Exception as e_page:
                     print(f"FOUT: OCR gefaald op pagina {i}: {e_page}")
 
-            # Correct page count check for PdfWriter
+                duration_page = time.time() - start_page
+                print(f"Tijd voor pagina {i}: {duration_page:.2f} seconden")
+
             if len(writer.pages) == 0:
                 print("FOUT: geen pagina's toegevoegd aan output. (TXT).pdf wordt niet aangemaakt.")
                 continue
 
-            try:
-                _write_final_pdf(writer, txt_path)
-                print(f"OCR voltooid: {txt_path}")
-                print(f"Niet-lege tekstpagina's: {non_empty_pages} van {page_count}")
-            except Exception as e_write:
-                print(f"FOUT: kon (TXT).pdf niet wegschrijven: {e_write}")
+            _write_final_pdf(writer, txt_path)
+            duration_total = time.time() - start_total
+            print(f"OCR voltooid: {txt_path}")
+            print(f"Niet-lege tekstpagina's: {non_empty_pages} van {page_count}")
+            print(f"Totaal OCR duur: {duration_total:.2f} seconden")
 
         except Exception as e:
             print(f"FOUT bij OCR '{file}': {e}")
@@ -145,5 +158,6 @@ if __name__ == "__main__":
     if not folder or not poppler_path or not tesseract_path:
         raise RuntimeError("MAIN_FOLDER, POPPLER_PATH of TESSERACT_PATH ontbreekt in config.env")
 
-    print(f"[{datetime.now().isoformat()}] Standalone OCR run")
-    ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=debug_flag, dpi=200)
+    dpi = choose_dpi()
+    print(f"[{datetime.now().isoformat()}] Standalone OCR run (DPI={dpi})")
+    ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=debug_flag, dpi=dpi)

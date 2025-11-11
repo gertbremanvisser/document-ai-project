@@ -1,46 +1,67 @@
 import os
+import csv
+from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog
 
-CONFIG_FILE = "config.env"
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "..", "config.env")
+LOG_FILE = os.path.join(os.path.dirname(__file__), "..", "logs", "project_setup_log.csv")
 
 def read_config():
-    """Lees alle key=value paren uit config.env in een dict."""
     config = {}
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 if "=" in line:
-                    key, value = line.strip().split("=", 1)
-                    config[key] = value
+                    k, v = line.strip().split("=", 1)
+                    config[k] = v
     return config
 
-def update_config(key, value):
-    """Update of voeg een key=value toe in config.env zonder andere te verwijderen."""
-    config = read_config()
-    config[key] = value
+def write_config(config):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         for k, v in config.items():
             f.write(f"{k}={v}\n")
 
-def get_main_folder():
-    """Dialoog om hoofdmap te kiezen en opslaan in environment + config.env."""
+def ensure_dir_valid(path):
+    return bool(path and os.path.isdir(path))
+
+def pick_folder_dialog(initial=None):
     root = tk.Tk()
     root.withdraw()
-    folder = filedialog.askdirectory(title="Selecteer hoofdmap met PDF's")
+    if initial and ensure_dir_valid(initial):
+        folder = filedialog.askdirectory(title="Bevestig of kies hoofdmap", initialdir=initial)
+    else:
+        folder = filedialog.askdirectory(title="Selecteer hoofdmap met PDF's")
+    return os.path.normpath(folder) if folder else None
 
-    if folder:
-        # Normaliseer pad naar OS-stijl (voorkomt slash-verschillen)
-        folder = os.path.normpath(folder)
+def set_main_folder(folder, config):
+    folder = os.path.normpath(folder)
+    os.environ["MAIN_FOLDER"] = folder
+    config["MAIN_FOLDER"] = folder
+    write_config(config)
+    log_action("MAIN_FOLDER_SET", folder)
 
-        # Zet environment variabele voor huidige sessie
-        os.environ["MAIN_FOLDER"] = folder
+def log_action(action, folder):
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([datetime.now().isoformat(), action, folder])
 
-        # Update config.env zonder andere variabelen kwijt te raken
-        update_config("MAIN_FOLDER", folder)
+def main():
+    config = read_config()
+    current = config.get("MAIN_FOLDER")
 
-    return folder
+    # Dialoog altijd tonen, met default selectie indien geldig
+    chosen = pick_folder_dialog(initial=current)
+
+    if not chosen:
+        raise RuntimeError("Geen map geselecteerd. MAIN_FOLDER blijft ongewijzigd.")
+
+    if not ensure_dir_valid(chosen):
+        raise RuntimeError(f"Gekozen map ongeldig of niet toegankelijk: {chosen}")
+
+    set_main_folder(chosen, config)
+    print(f"MAIN_FOLDER ingesteld/bevestigd op: {chosen}")
 
 if __name__ == "__main__":
-    chosen = get_main_folder()
-    print(f"Hoofdmap ingesteld op: {chosen}")
+    main()

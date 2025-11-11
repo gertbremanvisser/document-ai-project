@@ -27,9 +27,12 @@ def ocr_pdfs(folder, poppler_path, tesseract_path):
             print(f"OCR uitvoeren op: {ocr_path}")
 
             try:
+                print(f"Converteer {ocr_path} naar afbeeldingen...")
                 images = convert_from_path(ocr_path, poppler_path=poppler_path)
+                print(f"{len(images)} pagina's gevonden")
                 writer = PdfWriter()
-                for img in images:
+                for i, img in enumerate(images):
+                    print(f"OCR pagina {i+1}")
                     text_pdf = pytesseract.image_to_pdf_or_hocr(img, extension='pdf')
                     reader = PdfReader(io.BytesIO(text_pdf))
                     writer.add_page(reader.pages[0])

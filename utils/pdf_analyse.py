@@ -10,7 +10,8 @@ def analyse_pdfs(folder):
     """
     print("Analyse gestart...")
     for file in os.listdir(folder):
-        if file.endswith(".pdf") and not ("(TXT)" in file or "(OCR)" in file):
+        fname = file.lower()
+        if fname.endswith(".pdf") and not ("(txt)" in fname or "(ocr)" in fname):
             path = os.path.join(folder, file)
             try:
                 doc = fitz.open(path)
@@ -21,9 +22,9 @@ def analyse_pdfs(folder):
                 continue
 
             if text.strip():
-                new_name = file.replace(".pdf", "(TXT).pdf")
+                new_name = file.replace(".pdf", "(TXT).pdf").replace(".PDF", "(TXT).pdf")
             else:
-                new_name = file.replace(".pdf", "(OCR).pdf")
+                new_name = file.replace(".pdf", "(OCR).pdf").replace(".PDF", "(OCR).pdf")
 
             new_path = os.path.join(folder, new_name)
             if not os.path.exists(new_path):

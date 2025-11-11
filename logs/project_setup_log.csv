@@ -27,3 +27,6 @@ timestamp,type,path,status,user,machine
 2025-11-11T13:53:54.670894,WORKFLOW_START,Workflow gestart
 2025-11-11T13:54:10.734117,MAIN_FOLDER_SET,E:\000 0 Interessant\1000.Keyboard.Ideas.ed.Ronald.Herder.PDF
 2025-11-11T13:54:10.736916,WORKFLOW_END,Workflow afgerond
+2025-11-11T14:05:33.000021,WORKFLOW_START,Workflow gestart
+2025-11-11T14:05:39.995070,MAIN_FOLDER_SET,E:\000 0 Interessant\1000.Keyboard.Ideas.ed.Ronald.Herder.PDF
+2025-11-11T14:05:39.997846,WORKFLOW_END,Workflow afgerond

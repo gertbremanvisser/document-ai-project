@@ -1,6 +1,5 @@
 import os
 import io
-import sys
 from datetime import datetime
 
 import pytesseract
@@ -11,8 +10,8 @@ from utils.config_utils import read_config
 
 def _debug_dir(base_folder, base_name):
     """
-    Create and return a debug folder path for a given PDF.
-    Only used when DEBUG_OCR=1 in config.
+    Maak een debug-map voor een gegeven PDF.
+    Alleen gebruikt als DEBUG_OCR=1 in config.env.
     """
     dbg = os.path.join(base_folder, f"{base_name}_ocr_debug")
     os.makedirs(dbg, exist_ok=True)
@@ -20,49 +19,38 @@ def _debug_dir(base_folder, base_name):
 
 def _write_final_pdf(writer, out_path):
     """
-    Safely write the combined OCR PDF.
+    Schrijf het gecombineerde OCR-PDF veilig weg.
     """
     tmp_path = out_path + ".tmp"
     with open(tmp_path, "wb") as f_out:
         writer.write(f_out)
-    # Atomic-like move on Windows
     if os.path.exists(out_path):
         os.remove(out_path)
     os.replace(tmp_path, out_path)
 
 def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
     """
-    Run OCR on all (OCR).pdf files in the folder, creating (TXT).pdf if missing.
-
-    - Converts each page to an image via Poppler (pdf2image).
-    - Uses Tesseract to produce a per-page searchable PDF (image_to_pdf_or_hocr).
-    - Merges pages into one (TXT).pdf using PyPDF2.
-    - With debug_ocr=True, saves intermediate PNGs and HOCR files per page for inspection.
-
-    Args:
-        folder (str): Folder containing PDFs.
-        poppler_path (str): Path to Poppler binaries (bin directory).
-        tesseract_path (str): Full path to tesseract.exe.
-        debug_ocr (bool): If True, dump per-page images and HOCR outputs.
-        dpi (int): Render DPI for pdf2image. Higher DPI increases quality and time.
+    Voer OCR uit op alle (OCR).pdf bestanden in de opgegeven folder.
+    - Converteert elke pagina naar een afbeelding (pdf2image/Poppler).
+    - Gebruikt Tesseract om per pagina een searchable PDF te maken.
+    - Combineert alle pagina's tot één (TXT).pdf.
+    - Met debug_ocr=True worden PNG's en HOCR-bestanden per pagina opgeslagen.
     """
     print("OCR gestart...")
     pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
-    # Sanity check
     if not os.path.isdir(folder):
         print(f"FOUT: folder bestaat niet of is niet toegankelijk: {folder}")
         return
 
-    # Collect candidates
-    candidates = [f for f in os.listdir(folder) if f.endswith("(OCR).pdf")]
+    candidates = [f for f in os.listdir(folder) if f.lower().endswith("(ocr).pdf")]
     if not candidates:
         print("Geen (OCR).pdf bestanden gevonden. Niets te doen.")
         print("OCR afgerond.")
         return
 
     for file in candidates:
-        base_name = file.replace("(OCR).pdf", "")
+        base_name = file[:-8]  # strip "(OCR).pdf" of "(OCR).PDF"
         ocr_path = os.path.join(folder, file)
         txt_path = os.path.join(folder, base_name + "(TXT).pdf")
 
@@ -72,7 +60,6 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
 
         print(f"OCR uitvoeren op: {ocr_path}")
 
-        # Optional debug dir
         dbg_dir = None
         if debug_ocr:
             dbg_dir = _debug_dir(folder, base_name)
@@ -88,7 +75,6 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
             non_empty_pages = 0
 
             for i, img in enumerate(images, start=1):
-                # Optional: persist image for inspection
                 if dbg_dir:
                     img_path = os.path.join(dbg_dir, f"page_{i:03d}.png")
                     try:
@@ -99,19 +85,16 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
 
                 print(f"OCR pagina {i}/{page_count}")
                 try:
-                    # PDF output (searchable image overlaid with text)
                     page_pdf_bytes = pytesseract.image_to_pdf_or_hocr(img, extension='pdf')
                     reader = PdfReader(io.BytesIO(page_pdf_bytes))
                     writer.add_page(reader.pages[0])
 
-                    # Plain text check (helps detect empty or non-recognized pages)
                     plain_text = pytesseract.image_to_string(img)
                     preview = plain_text[:120].replace("\n", " ").strip()
                     if preview:
                         non_empty_pages += 1
                     print(f"Pagina {i} tekst preview: {repr(preview)}")
 
-                    # Optional: write HOCR for deeper analysis
                     if dbg_dir:
                         try:
                             hocr = pytesseract.image_to_pdf_or_hocr(img, extension='hocr')
@@ -142,7 +125,6 @@ def ocr_pdfs(folder, poppler_path, tesseract_path, debug_ocr=False, dpi=300):
     print("OCR afgerond.")
 
 if __name__ == "__main__":
-    # Allow standalone runs for quick tests
     config = read_config()
     folder = config.get("MAIN_FOLDER")
     poppler_path = config.get("POPPLER_PATH")

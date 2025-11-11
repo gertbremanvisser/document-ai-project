@@ -26,3 +26,20 @@ Thumbs.db
 # Backups en tijdelijke bestanden
 *.bak
 *.tmp
+
+# Build/packaging artefacten
+build/
+dist/
+*.egg-info/
+
+# Test/coverage output
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# IDE extra's
+.idea/

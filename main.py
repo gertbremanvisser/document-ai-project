@@ -18,6 +18,7 @@ def main():
 
     # Stap 1: hoofdmap bevestigen/kiezen
     select_folder.main()
+    print("Stap 1: select_folder klaar")
 
     # Stap 2: analyse uitvoeren
     config = read_config()
@@ -26,6 +27,7 @@ def main():
         log_action("ERROR", "MAIN_FOLDER ontbreekt")
         raise RuntimeError("MAIN_FOLDER ontbreekt. Draai select_folder opnieuw.")
     pdf_analyse.analyse_pdfs(folder)
+    print("Stap 2: analyse klaar")
 
     # Stap 3: OCR uitvoeren
     poppler_path = config.get("POPPLER_PATH")
@@ -34,6 +36,7 @@ def main():
         log_action("ERROR", "POPPLER_PATH of TESSERACT_PATH ontbreekt")
         raise RuntimeError("POPPLER_PATH of TESSERACT_PATH ontbreekt in config.env.")
     pdf_ocr.ocr_pdfs(folder, poppler_path, tesseract_path)
+    print("Stap 3: OCR klaar")
 
     log_action("WORKFLOW_END", "Workflow afgerond")
 

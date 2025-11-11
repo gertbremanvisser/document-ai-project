@@ -8,6 +8,7 @@ def analyse_pdfs(folder):
     - Bestanden met tekst krijgen suffix (TXT).pdf
     - Bestanden zonder tekst krijgen suffix (OCR).pdf
     """
+    print("Analyse gestart...")
     for file in os.listdir(folder):
         if file.endswith(".pdf") and not ("(TXT)" in file or "(OCR)" in file):
             path = os.path.join(folder, file)
@@ -30,6 +31,7 @@ def analyse_pdfs(folder):
                 print(f"{file} → {new_name}")
             else:
                 print(f"SKIPPED: {new_name} bestaat al")
+    print("Analyse afgerond.")
 
 if __name__ == "__main__":
     config = read_config()

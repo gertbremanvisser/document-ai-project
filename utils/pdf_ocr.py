@@ -1,4 +1,5 @@
 import os
+import io
 import pytesseract
 from pdf2image import convert_from_path
 from PyPDF2 import PdfWriter, PdfReader
@@ -10,7 +11,7 @@ def ocr_pdfs(folder, poppler_path, tesseract_path):
     - Alleen bestanden die nog geen (TXT).pdf hebben worden verwerkt.
     - Resultaat wordt opgeslagen als (TXT).pdf.
     """
-    # Configureer Tesseract
+    print("OCR gestart...")
     pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
     for file in os.listdir(folder):
@@ -26,17 +27,13 @@ def ocr_pdfs(folder, poppler_path, tesseract_path):
             print(f"OCR uitvoeren op: {ocr_path}")
 
             try:
-                # Converteer PDF naar afbeeldingen
                 images = convert_from_path(ocr_path, poppler_path=poppler_path)
-
-                # OCR uitvoeren per pagina
                 writer = PdfWriter()
-                for i, img in enumerate(images):
-                    text = pytesseract.image_to_pdf_or_hocr(img, extension='pdf')
-                    reader = PdfReader(io.BytesIO(text))
+                for img in images:
+                    text_pdf = pytesseract.image_to_pdf_or_hocr(img, extension='pdf')
+                    reader = PdfReader(io.BytesIO(text_pdf))
                     writer.add_page(reader.pages[0])
 
-                # Opslaan als (TXT).pdf
                 with open(txt_file, "wb") as f_out:
                     writer.write(f_out)
 
@@ -44,6 +41,7 @@ def ocr_pdfs(folder, poppler_path, tesseract_path):
 
             except Exception as e:
                 print(f"FOUT bij OCR {file}: {e}")
+    print("OCR afgerond.")
 
 if __name__ == "__main__":
     config = read_config()

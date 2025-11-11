@@ -3,24 +3,10 @@ import csv
 from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog
+from utils.config_utils import read_config, write_config
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "..", "config.env")
 LOG_FILE = os.path.join(os.path.dirname(__file__), "..", "logs", "project_setup_log.csv")
-
-def read_config():
-    config = {}
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            for line in f:
-                if "=" in line:
-                    k, v = line.strip().split("=", 1)
-                    config[k] = v
-    return config
-
-def write_config(config):
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        for k, v in config.items():
-            f.write(f"{k}={v}\n")
 
 def ensure_dir_valid(path):
     return bool(path and os.path.isdir(path))
@@ -34,18 +20,18 @@ def pick_folder_dialog(initial=None):
         folder = filedialog.askdirectory(title="Selecteer hoofdmap met PDF's")
     return os.path.normpath(folder) if folder else None
 
+def log_action(action, folder):
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([datetime.now().isoformat(), action, folder])
+
 def set_main_folder(folder, config):
     folder = os.path.normpath(folder)
     os.environ["MAIN_FOLDER"] = folder
     config["MAIN_FOLDER"] = folder
     write_config(config)
     log_action("MAIN_FOLDER_SET", folder)
-
-def log_action(action, folder):
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    with open(LOG_FILE, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow([datetime.now().isoformat(), action, folder])
 
 def main():
     config = read_config()

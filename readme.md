@@ -51,6 +51,19 @@ Gebruik een consistente stijl voor commits:
 
 ## 📊 Projectstructuur
 
+document_ai_project/
+├── utils/
+│   ├── __init__.py          # maakt utils een package
+│   ├── config_utils.py      # centrale config functies
+│   ├── select_folder.py     # dialoog voor hoofdmap
+│   ├── pdf_analyse.py       # analyse van PDF's (fitz)
+│   └── pdf_ocr.py           # OCR uitvoeren
+├── logs/
+│   └── project_setup_log.csv
+├── main.py                  # centrale entrypoint
+├── .gitignore
+├── config.env
+└── README.md
 
 ---
 

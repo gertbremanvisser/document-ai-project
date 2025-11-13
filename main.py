@@ -4,8 +4,8 @@ import csv
 from datetime import datetime
 from utils import select_folder, pdf_analyse, pdf_ocr
 from utils.config_utils import read_config, set_env_from_config, ensure_msys2_path
-from kindle_pipeline import kindle_to_pdf_pipeline
-from epub_pipeline import epub_to_pdf_pipeline
+from utils.kindle_pipeline import kindle_to_pdf_pipeline
+from utils.epub_pipeline import epub_to_pdf_pipeline
 
 LOG_FILE = os.path.join(os.path.dirname(__file__), "logs", "project_setup_log.csv")
 

@@ -3,8 +3,8 @@ import sys
 from weasyprint import HTML
 
 # Zorg dat KindleUnpack repo beschikbaar is
-sys.path.append(os.path.join(os.path.dirname(__file__), "KindleUnpack"))
-import kindleunpack
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "KindleUnpack"))
+from lib import kindleunpack
 
 def unpack_to_html(input_path, output_html_path):
     """

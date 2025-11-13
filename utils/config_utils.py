@@ -29,3 +29,12 @@ def set_env_from_config(config):
     """
     for k, v in config.items():
         os.environ[k] = v
+
+def ensure_msys2_path():
+    """
+    Zorg dat MSYS2_BIN uit config.env in PATH staat.
+    """
+    msys2_bin = os.environ.get("MSYS2_BIN")
+    if msys2_bin and msys2_bin not in os.environ["PATH"]:
+        os.environ["PATH"] = msys2_bin + os.pathsep + os.environ["PATH"]
+        print(f"[config_utils] MSYS2 path toegevoegd: {msys2_bin}")
